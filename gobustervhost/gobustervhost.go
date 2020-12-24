@@ -84,7 +84,13 @@ func (v *GobusterVhost) PreRun() error {
 	if err != nil {
 		return fmt.Errorf("invalid url %s: %w", v.options.URL, err)
 	}
-	v.domain = urlParsed.Host
+
+	parts := strings.Split(urlParsed.Host, ".")
+	var v.domains []int
+
+	for i := 2; i <= parts.Length(); i++ {
+		v.domains = append(v.domains, strings.Join(parts[0:i], "."))
+	}
 
 	// request default vhost for baseline1
 	_, _, _, tmp, err := v.http.Request(v.options.URL, libgobuster.RequestOptions{ReturnBody: true})
@@ -105,26 +111,28 @@ func (v *GobusterVhost) PreRun() error {
 
 // Run is the process implementation of gobusterdir
 func (v *GobusterVhost) Run(word string, resChannel chan<- libgobuster.Result) error {
-	subdomain := fmt.Sprintf("%s.%s", word, v.domain)
-	status, size, header, body, err := v.http.Request(v.options.URL, libgobuster.RequestOptions{Host: subdomain, ReturnBody: true})
-	if err != nil {
-		return err
-	}
-
-	// subdomain must not match default vhost and non existent vhost
-	// or verbose mode is enabled
-	found := !bytes.Equal(body, v.baseline1) && !bytes.Equal(body, v.baseline2)
-	if found || v.globalopts.Verbose {
-		resultStatus := false
-		if found {
-			resultStatus = true
+	for _, domain := range v.domains {
+		subdomain := fmt.Sprintf("%s.%s", word, domain)
+		status, size, header, body, err := v.http.Request(v.options.URL, libgobuster.RequestOptions{Host: subdomain, ReturnBody: true})
+		if err != nil {
+			return err
 		}
-		resChannel <- Result{
-			Found:      resultStatus,
-			Vhost:      subdomain,
-			StatusCode: *status,
-			Size:       size,
-			Header:     header,
+
+		// subdomain must not match default vhost and non existent vhost
+		// or verbose mode is enabled
+		found := !bytes.Equal(body, v.baseline1) && !bytes.Equal(body, v.baseline2)
+		if found || v.globalopts.Verbose {
+			resultStatus := false
+			if found {
+				resultStatus = true
+			}
+			resChannel <- Result{
+				Found:      resultStatus,
+				Vhost:      subdomain,
+				StatusCode: *status,
+				Size:       size,
+				Header:     header,
+			}
 		}
 	}
 	return nil
