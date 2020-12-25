@@ -14,6 +14,7 @@ type Result struct {
 	Subdomain string
 	IPs       []string
 	CNAME     string
+	Verbose   bool
 }
 
 // ToString converts the Result to it's textual representation
@@ -21,8 +22,10 @@ func (r Result) ResultToString() (string, error) {
 	buf := &bytes.Buffer{}
 
 	if r.Found {
-		if _, err := fmt.Fprintf(buf, "Found: "); err != nil {
-			return "", err
+		if r.Verbose {
+			if _, err := fmt.Fprintf(buf, "Found: "); err != nil {
+				return "", err
+			}
 		}
 	} else {
 		if _, err := fmt.Fprintf(buf, "Missed: "); err != nil {
