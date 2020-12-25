@@ -117,6 +117,7 @@ func (d *GobusterDNS) Run(word string, resChannel chan<- libgobuster.Result) err
 				Found:     true,
 				ShowIPs:   d.options.ShowIPs,
 				ShowCNAME: d.options.ShowCNAME,
+				Verbose:   d.globalopts.Verbose,
 			}
 			if d.options.ShowIPs {
 				result.IPs = ips
@@ -134,6 +135,7 @@ func (d *GobusterDNS) Run(word string, resChannel chan<- libgobuster.Result) err
 			Found:     false,
 			ShowIPs:   d.options.ShowIPs,
 			ShowCNAME: d.options.ShowCNAME,
+			Verbose:   d.globalopts.Verbose,
 		}
 	}
 	return nil
